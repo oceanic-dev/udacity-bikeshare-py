@@ -24,5 +24,20 @@ This project analyzes bikeshare data from three major US cities: Chicago, New Yo
 4. Run `python bikeshare.py`
 5. Follow the interactive prompts
 
+## Dependencies
+This project requires the following Python packages:
+- NumPy (>=1.21.0)
+- pandas (>=1.3.0)
+
+You can install these dependencies using pip:
+```bash
+pip install numpy pandas
+```
+
+Or using the requirements.txt file:
+```bash
+pip install -r requirements.txt
+```
+
 ### Credits
 The code demo for the Bikeshare Project, given by the Udacity Instructors, can be viewed on [YouTube](https://www.youtube.com/watch?v=--81WEZH6TQ). The inspiration that help craft my approach to the project (beyond the demo) stemmed from the retro terminal interface like that found in MS-DOS from the 80s.
