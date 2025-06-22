@@ -24,15 +24,16 @@ def time_stats(df):
     print(f'The mode month: {months_of_year[popular_month-1]}')
 
     # Calculate and display the most common day of the week
-    print(f'The MODE day of the week: {df['Start Day'].mode()[0]}')
+    popular_day_week = df['Start Day'].mode()[0]
+    print(f'The MODE day of the week: {popular_day_week}')
 
     # Calculate and display the most common start hour, formatted as HH:00
     popular_hour = df['Start Hour'].mode()[0]
-    if popular_hour >= 12:
+    if popular_hour >= 10:
         print(f'The MODE hour: {popular_hour}h00')
     else:
         print(f'The MODE hour: 0{popular_hour}h00')
-
+        
 def station_stats(no_filter_df):
     """Displays statistics on the most popular stations and trip combinations."""
     # Print a separator line for readability
@@ -129,73 +130,58 @@ def city_filter(PATH):
 
 def filter_by_month(df):
     """Filters the dataset by a user-specified month."""
-    monthNum = 0
     # List of month names for readable output
     months_of_year = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ]
 
-    # Loop until a valid month number (1-12) is provided
-    while monthNum < 1 or monthNum > 12:
-        try: 
-            monthNum = input('Choose by which month you wish to filter the dataset [1-12]: ').strip()
-            monthNum = int(monthNum)
-        except KeyboardInterrupt:
-            print('\n*** Terminating Script ***')
-            sys.exit()
-        except:
-            print("\n*** Invalid Input ***\n"
-                  "Insert an integer [1 <= month <= 12]")
-            monthNum = 0
-        else:
-            filtered_df = df[df['Start Month'] == monthNum]
-    
-    print(f'--- Month Selected: {months_of_year[monthNum-1]} ---')   
+    while True:
+        try:
+            month_input = input('Choose by which month you wish to filter the dataset [1-12]: ').strip()
+            monthNum = int(month_input)
+            if 1 <= monthNum <= 12:
+                break
+            else:
+                print("\n*** Invalid Input ***\nInsert an integer [1 <= month <= 12]")
+        except ValueError:
+            print("\n*** Invalid Input ***\nInsert an integer [1 <= month <= 12]")
+
+    filtered_df = df[df['Start Month'] == monthNum]
+    print(f'--- Month Selected: {months_of_year[monthNum-1]} ---')
     return filtered_df
 
 def filter_by_day_of_week(df):
     """Filters the dataset by a user-specified day of the week."""
-    # List of valid days of the week
     days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    day = 'Day'
+    day_map = {
+        "1": "Monday", "Mon": "Monday", "Monday": "Monday",
+        "2": "Tuesday", "Tue": "Tuesday", "Tuesday": "Tuesday",
+        "3": "Wednesday", "Wed": "Wednesday", "Wednesday": "Wednesday",
+        "4": "Thursday", "Thu": "Thursday", "Thursday": "Thursday",
+        "5": "Friday", "Fri": "Friday", "Friday": "Friday",
+        "6": "Saturday", "Sat": "Saturday", "Saturday": "Saturday",
+        "7": "Sunday", "Sun": "Sunday", "Sunday": "Sunday"
+    }
 
-    # Loop until a valid day is provided
-    while day not in days_of_week:
-        try:
-            day = input(
-                "1 - MON - Monday\n"
-                "2 - TUE - Tuesday\n"
-                "3 - WED - Wednesday\n"
-                "4 - THU - Thursday\n"
-                "5 - FRI - Friday\n"
-                "6 - SAT - Saturday\n"
-                "7 - SUN - Sunday\n"
-                "Choose by which day of the week you wish to filter the dataset: ").strip()
-        except KeyboardInterrupt:
-            print('\n*** Terminating Script ***')
-            sys.exit()
-        else:
-            day = day.capitalize()  # Standardize input to title case
-            # Map numeric or abbreviated inputs to full day names
-            if day in ["1", "Mon"]: 
-                day = "Monday"
-            elif day in ["2", "Tue"]: 
-                day = "Tuesday"
-            elif day in ["3", "Wed"]: 
-                day = "Wednesday"
-            elif day in ["4", "Thu"]: 
-                day = "Thursday"
-            elif day in ["5", "Fri"]: 
-                day = "Friday"
-            elif day in ["6", "Sat"]: 
-                day = "Saturday"
-            elif day in ["7", "Sun"]: 
-                day = "Sunday"
-            if day not in days_of_week:
-                print("\n*** Invalid input ***")
+    while True:
+        user_input = input(
+            "1 - MON - Monday\n"
+            "2 - TUE - Tuesday\n"
+            "3 - WED - Wednesday\n"
+            "4 - THU - Thursday\n"
+            "5 - FRI - Friday\n"
+            "6 - SAT - Saturday\n"
+            "7 - SUN - Sunday\n"
+            "Choose by which day of the week you wish to filter the dataset: "
+        ).strip().capitalize()
+        day = day_map.get(user_input, None)
+        if day:
+            break
+        print("\n*** Invalid input ***")
 
-    print(f'--- Selected Filter: {day}')        
+    print(f'--- Selected Filter: {day}')
+    # Use vectorized comparison for speed
     filtered_df = df[df['Start Day'] == day]
     return filtered_df
 
