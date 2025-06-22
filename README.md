@@ -52,6 +52,9 @@ Let’s work together to make this project a comprehensive resource for bikeshar
 ### Credits
 The code demo for the Bikeshare Project, given by the Udacity Instructors, can be viewed on [YouTube](https://www.youtube.com/watch?v=--81WEZH6TQ). The inspiration that help craft my approach to the project (beyond the demo) stemmed from the retro terminal interface like that found in MS-DOS from the 80s.
 
+## License
+This project is licensed under the MIT License - see  `LICENSE.txt` for details.
+
 ## Program Menu Screenshot
 Below is a screenshot of the main menu screen displayed when you run the Python bikeshare program and have selected a city dataset:
 ![Main Menu Screen Image](images/bikeshare_menu.png)
