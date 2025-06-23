@@ -34,30 +34,36 @@ def time_stats(df):
     else:
         print(f'The MODE hour: 0{popular_hour}h00')
         
-def station_stats(no_filter_df):
+def station_stats(df):
     """Displays statistics on the most popular stations and trip combinations."""
-    # Print a separator line for readability
-    print('-'*100)
+    print('-' * 100)
 
-    # Calculate the total number of rides
-    ride_count = no_filter_df['Start Time'].count()
+    ride_count = df['Start Time'].count()
 
-    # Display the most commonly used start station
-    print(f'MODE Start Station for {ride_count} rides: {no_filter_df['Start Station'].mode()[0]}')
+    # Most common start station
+    if 'Start Station' in df.columns:
+        popular_start = df['Start Station'].mode()[0]
+        print(f'MODE Start Station for {ride_count} rides: {popular_start}')
+    else:
+        print('Start Station column not found.')
 
-    # Display the most commonly used end station
-    print(f'MODE End Station for {ride_count} rides: {no_filter_df['End Station'].mode()[0]}')
-    
-    # Create a column for start-to-end station combinations
-    no_filter_df['Station Combo'] = no_filter_df['Start Station'] + ' - ' + no_filter_df['End Station']
+    # Most common end station
+    if 'End Station' in df.columns:
+        popular_end = df['End Station'].mode()[0]
+        print(f'MODE End Station for {ride_count} rides: {popular_end}')
+    else:
+        print('End Station column not found.')
 
-    # Display the most frequent start-to-end station combination
-    print(f'MODE Trip Combo for {ride_count} rides: {no_filter_df['Station Combo'].mode()[0]}')
+    # Most frequent start-to-end station combination
+    if 'Start Station' in df.columns and 'End Station' in df.columns:
+        # Use a tuple for speed and avoid modifying the original DataFrame
+        combo = df[['Start Station', 'End Station']].agg(tuple, axis=1)
+        popular_combo = combo.mode()[0]
+        print(f'MODE Trip Combo for {ride_count} rides: {popular_combo[0]} - {popular_combo[1]}')
+    else:
+        print('Cannot compute trip combo without both Start and End Station columns.')
 
-    no_filter_df.drop(columns=['Station Combo'], inplace = True)
-
-    # Print a separator line for readability
-    print('-'*100)
+    print('-' * 100)
 
 def trip_duration_stats(df):
     """Displays statistics on total and average trip duration."""
