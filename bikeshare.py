@@ -74,31 +74,45 @@ def trip_duration_stats(df):
     print('-'*100)
 
 def user_stats(df):
-    """Displays statistics on bikeshare users, including user types, gender, and age."""
-    # Print a separator line for readability
-    print('-'*100)
+    """Displays statistics on bikeshare users: user types, gender, and rider age."""
+    print('-' * 100)
 
-    # Display counts of different user types
-    print(df['User Type'].value_counts())
-    print('-'*100)
+    # User Type counts
+    if 'User Type' in df.columns:
+        user_counts = df['User Type'].value_counts(dropna=False)
+        print(f"{'User Type':<20} {'Count':>10}")
+        print(user_counts.to_string())
+        print('-' * 100)
+    else:
+        print("User Type column not found.")
+        print('-' * 100)
 
-    # Display counts of gender, if the column exists in the dataset
+    # Gender counts
     if 'Gender' in df.columns:
-        print(df['Gender'].value_counts())
-        print('-'*100)
+        gender_counts = df['Gender'].value_counts(dropna=False)
+        print(f"{'Gender':<20} {'Count':>10}")
+        print(gender_counts.to_string())
+        print('-' * 100)
 
-    # Calculate and display rider age statistics, if Birth Year column exists
-    if 'Birth Year' in df.columns:
-        # Create a copy of the dataframe, filtering out rows with missing Birth Year
-        df_filter_nan = df[df['Birth Year'].notna()].copy()
+    # Rider Age stats
+    if 'Birth Year' in df.columns and 'Start Time' in df.columns:
+        # Use numpy for speed, avoid chained assignment
+        birth_years = pd.to_numeric(df['Birth Year'], errors='coerce')
+        start_years = df['Start Time'].dt.year
+        valid_mask = birth_years.notna() & start_years.notna()
+        ages = (start_years[valid_mask] - birth_years[valid_mask]).astype(int)
 
-        # Calculate rider age based on the year of the Start Time
-        df_filter_nan['Rider Age'] = df_filter_nan['Start Time'].dt.year - df_filter_nan['Birth Year'].astype(int)
-
-        # Display minimum, mode, and maximum rider ages
-        print(f'MIN Rider Age: {int(df_filter_nan["Rider Age"].min())}')
-        print(f"MODE Rider Age: {int(df_filter_nan['Rider Age'].mode().iloc[0])}")
-        print(f"MAX Rider Age: {int(df_filter_nan['Rider Age'].max())}")
+        if not ages.empty:
+            min_age = ages.min()
+            mode_age = ages.mode().iloc[0]
+            max_age = ages.max()
+            print(f"{'MIN Rider Age':<20}: {min_age}")
+            print(f"{'MODE Rider Age':<20}: {mode_age}")
+            print(f"{'MAX Rider Age':<20}: {max_age}")
+        else:
+            print("No valid rider age data available.")
+    else:
+        print("Birth Year or Start Time column not found.")
 
 def city_filter(PATH):
     """Prompts the user to select a city dataset and loads the corresponding CSV file."""
