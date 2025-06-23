@@ -61,17 +61,29 @@ def station_stats(no_filter_df):
 
 def trip_duration_stats(df):
     """Displays statistics on total and average trip duration."""
-    # Print a separator line for readability
-    print('-'*100)
+    # Ensure 'Trip Duration' column exists and is numeric
+    if 'Trip Duration' not in df.columns:
+        print('Trip Duration column not found.')
+        return
 
-    # Calculate and display total travel time in hours
-    print(f'Total Travel Time of {df['Start Time'].count()} rides: {(df['Trip Duration'].sum()/3600).round(2)} hrs')
+    # Drop NaN values for accurate stats
+    trip_durations = pd.to_numeric(df['Trip Duration'], errors='coerce').dropna()
+    ride_count = trip_durations.count()
 
-    # Calculate and display mean travel time in minutes
-    print(f'MEAN travel time across {df['Start Time'].count()} rides: {(df['Trip Duration'].mean()/60).round(2)} min')
+    if ride_count == 0:
+        print('No valid trip duration data available.')
+        return
 
-    # Print a separator line for readability
-    print('-'*100)
+    # Calculate total travel time in hours (rounded to 2 decimals)
+    total_duration_hrs = np.round(trip_durations.sum() / 3600, 2)
+    # Calculate mean travel time in minutes (rounded to 2 decimals)
+    avg_travel_min = np.round(trip_durations.mean() / 60, 2)
+
+    # Pretty print with alignment and thousands separator
+    print('-' * 100)
+    print(f"{'Total Travel Time':<30}: {total_duration_hrs:>10,.2f} hrs ({ride_count:,} rides)")
+    print(f"{'Mean Travel Time':<30}: {avg_travel_min:>10,.2f} min")
+    print('-' * 100)
 
 def user_stats(df):
     """Displays statistics on bikeshare users: user types, gender, and rider age."""
