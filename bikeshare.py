@@ -24,182 +24,198 @@ def time_stats(df):
     print(f'The mode month: {months_of_year[popular_month-1]}')
 
     # Calculate and display the most common day of the week
-    print(f'The MODE day of the week: {df['Start Day'].mode()[0]}')
+    popular_day_week = df['Start Day'].mode()[0]
+    print(f'The MODE day of the week: {popular_day_week}')
 
     # Calculate and display the most common start hour, formatted as HH:00
     popular_hour = df['Start Hour'].mode()[0]
-    if popular_hour >= 12:
+    if popular_hour >= 10:
         print(f'The MODE hour: {popular_hour}h00')
     else:
         print(f'The MODE hour: 0{popular_hour}h00')
-
-def station_stats(no_filter_df):
+        
+def station_stats(df):
     """Displays statistics on the most popular stations and trip combinations."""
-    # Print a separator line for readability
-    print('-'*100)
+    print('-' * 100)
 
-    # Calculate the total number of rides
-    ride_count = no_filter_df['Start Time'].count()
+    ride_count = df['Start Time'].count()
 
-    # Display the most commonly used start station
-    print(f'MODE Start Station for {ride_count} rides: {no_filter_df['Start Station'].mode()[0]}')
+    # Most common start station
+    if 'Start Station' in df.columns:
+        popular_start = df['Start Station'].mode()[0]
+        print(f'MODE Start Station for {ride_count} rides: {popular_start}')
+    else:
+        print('Start Station column not found.')
 
-    # Display the most commonly used end station
-    print(f'MODE End Station for {ride_count} rides: {no_filter_df['End Station'].mode()[0]}')
-    
-    # Create a column for start-to-end station combinations
-    no_filter_df['Station Combo'] = no_filter_df['Start Station'] + ' - ' + no_filter_df['End Station']
+    # Most common end station
+    if 'End Station' in df.columns:
+        popular_end = df['End Station'].mode()[0]
+        print(f'MODE End Station for {ride_count} rides: {popular_end}')
+    else:
+        print('End Station column not found.')
 
-    # Display the most frequent start-to-end station combination
-    print(f'MODE Trip Combo for {ride_count} rides: {no_filter_df['Station Combo'].mode()[0]}')
+    # Most frequent start-to-end station combination
+    if 'Start Station' in df.columns and 'End Station' in df.columns:
+        # Use a tuple for speed and avoid modifying the original DataFrame
+        combo = df[['Start Station', 'End Station']].agg(tuple, axis=1)
+        popular_combo = combo.mode()[0]
+        print(f'MODE Trip Combo for {ride_count} rides: {popular_combo[0]} - {popular_combo[1]}')
+    else:
+        print('Cannot compute trip combo without both Start and End Station columns.')
 
-    no_filter_df.drop(columns=['Station Combo'], inplace = True)
-
-    # Print a separator line for readability
-    print('-'*100)
+    print('-' * 100)
 
 def trip_duration_stats(df):
     """Displays statistics on total and average trip duration."""
-    # Print a separator line for readability
-    print('-'*100)
+    # Ensure 'Trip Duration' column exists and is numeric
+    if 'Trip Duration' not in df.columns:
+        print('Trip Duration column not found.')
+        return
 
-    # Calculate and display total travel time in hours
-    print(f'Total Travel Time of {df['Start Time'].count()} rides: {(df['Trip Duration'].sum()/3600).round(2)} hrs')
+    # Drop NaN values for accurate stats
+    trip_durations = pd.to_numeric(df['Trip Duration'], errors='coerce').dropna()
+    ride_count = trip_durations.count()
 
-    # Calculate and display mean travel time in minutes
-    print(f'MEAN travel time across {df['Start Time'].count()} rides: {(df['Trip Duration'].mean()/60).round(2)} min')
+    if ride_count == 0:
+        print('No valid trip duration data available.')
+        return
 
-    # Print a separator line for readability
-    print('-'*100)
+    # Calculate total travel time in hours (rounded to 2 decimals)
+    total_duration_hrs = np.round(trip_durations.sum() / 3600, 2)
+    # Calculate mean travel time in minutes (rounded to 2 decimals)
+    avg_travel_min = np.round(trip_durations.mean() / 60, 2)
+
+    # Pretty print with alignment and thousands separator
+    print('-' * 100)
+    print(f"{'Total Travel Time':<30}: {total_duration_hrs:>10,.2f} hrs ({ride_count:,} rides)")
+    print(f"{'Mean Travel Time':<30}: {avg_travel_min:>10,.2f} min")
+    print('-' * 100)
 
 def user_stats(df):
-    """Displays statistics on bikeshare users, including user types, gender, and age."""
-    # Print a separator line for readability
-    print('-'*100)
+    """Displays statistics on bikeshare users: user types, gender, and rider age."""
+    print('-' * 100)
 
-    # Display counts of different user types
-    print(df['User Type'].value_counts())
-    print('-'*100)
+    # User Type counts
+    if 'User Type' in df.columns:
+        user_counts = df['User Type'].value_counts(dropna=False)
+        print(f"{'User Type':<20} {'Count':>10}")
+        print(user_counts.to_string())
+        print('-' * 100)
+    else:
+        print("User Type column not found.")
+        print('-' * 100)
 
-    # Display counts of gender, if the column exists in the dataset
+    # Gender counts
     if 'Gender' in df.columns:
-        print(df['Gender'].value_counts())
-        print('-'*100)
+        gender_counts = df['Gender'].value_counts(dropna=False)
+        print(f"{'Gender':<20} {'Count':>10}")
+        print(gender_counts.to_string())
+        print('-' * 100)
 
-    # Calculate and display rider age statistics, if Birth Year column exists
-    if 'Birth Year' in df.columns:
-        # Create a copy of the dataframe, filtering out rows with missing Birth Year
-        df_filter_nan = df[df['Birth Year'].notna()].copy()
+    # Rider Age stats
+    if 'Birth Year' in df.columns and 'Start Time' in df.columns:
+        # Use numpy for speed, avoid chained assignment
+        birth_years = pd.to_numeric(df['Birth Year'], errors='coerce')
+        start_years = df['Start Time'].dt.year
+        valid_mask = birth_years.notna() & start_years.notna()
+        ages = (start_years[valid_mask] - birth_years[valid_mask]).astype(int)
 
-        # Calculate rider age based on the year of the Start Time
-        df_filter_nan['Rider Age'] = df_filter_nan['Start Time'].dt.year - df_filter_nan['Birth Year'].astype(int)
-
-        # Display minimum, mode, and maximum rider ages
-        print(f'MIN Rider Age: {int(df_filter_nan["Rider Age"].min())}')
-        print(f"MODE Rider Age: {int(df_filter_nan['Rider Age'].mode().iloc[0])}")
-        print(f"MAX Rider Age: {int(df_filter_nan['Rider Age'].max())}")
+        if not ages.empty:
+            min_age = ages.min()
+            mode_age = ages.mode().iloc[0]
+            max_age = ages.max()
+            print(f"{'MIN Rider Age':<20}: {min_age}")
+            print(f"{'MODE Rider Age':<20}: {mode_age}")
+            print(f"{'MAX Rider Age':<20}: {max_age}")
+        else:
+            print("No valid rider age data available.")
+    else:
+        print("Birth Year or Start Time column not found.")
 
 def city_filter(PATH):
     """Prompts the user to select a city dataset and loads the corresponding CSV file."""
     # Define valid city codes and their full names
-    CITIES = ['CH', 'NY', 'WS']
-    CITY_NAMES = {'CH': 'Chicago', 'NY': 'New York', 'WS': 'Washington'}
-    user_input = True
+    city_names = {'CH': 'Chicago', 'NY': 'New York', 'WS': 'Washington'}
 
     # Loop until a valid city code is provided
-    while user_input:
+    while True:
         user_city = input('CH - Chicago\n'
                           'NY - New York\n'
                           'WS - Washington DC\n'
-                          'Which dataset do you want to use [CH, NY, WS]: ').upper()
+                          'Which dataset do you want to use [CH, NY, WS]: ').strip().upper()
         
-        if user_city in CITIES:
-            user_input = False
-        else:
-            print("*** Invalid Input - only [CH, NY, WS] ***")
+        if user_city in city_names:
+            break  # Exit the loop if a valid city code is provided
+        
+        print("*** Invalid Input - only [CH, NY, WS] ***")
     
     # Attempt to load the CSV file for the selected city
     try: 
-        df = pd.read_csv(PATH + CITY_DATA[user_city])
-    except: 
-        print('*** CSV Import Failed ***')
+        df = pd.read_csv(f"{PATH}{CITY_DATA[user_city]}")
+    except Exception as e: 
+        print(f'*** CSV Import Failed - {e} ***')
     else:
-        print(f'--- Imported {CITY_NAMES[user_city]} City Data ---')
+        print(f'--- Imported {city_names[user_city]} City Data ---')
         return df
 
 def filter_by_month(df):
     """Filters the dataset by a user-specified month."""
-    monthNum = 0
     # List of month names for readable output
     months_of_year = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ]
 
-    # Loop until a valid month number (1-12) is provided
-    while monthNum < 1 or monthNum > 12:
-        try: 
-            monthNum = input('Choose by which month you wish to filter the dataset [1-12]: ').strip()
-            monthNum = int(monthNum)
-        except KeyboardInterrupt:
-            print('\n*** Terminating Script ***')
-            sys.exit()
-        except:
-            print("\n*** Invalid Input ***\n"
-                  "Insert an integer [1 <= month <= 12]")
-            monthNum = 0
-        else:
-            filtered_df = df[df['Start Month'] == monthNum]
-    
-    print(f'--- Month Selected: {months_of_year[monthNum-1]} ---')   
+    while True:
+        try:
+            month_input = input('Choose by which month you wish to filter the dataset [1-12]: ').strip()
+            monthNum = int(month_input)
+            if 1 <= monthNum <= 12:
+                break
+            else:
+                print("\n*** Invalid Input ***\nInsert an integer [1 <= month <= 12]")
+        except ValueError:
+            print("\n*** Invalid Input ***\nInsert an integer [1 <= month <= 12]")
+
+    filtered_df = df[df['Start Month'] == monthNum]
+    print(f'--- Month Selected: {months_of_year[monthNum-1]} ---')
     return filtered_df
 
 def filter_by_day_of_week(df):
     """Filters the dataset by a user-specified day of the week."""
-    # List of valid days of the week
     days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    day = 'Day'
+    day_map = {
+        "1": "Monday", "Mon": "Monday", "Monday": "Monday",
+        "2": "Tuesday", "Tue": "Tuesday", "Tuesday": "Tuesday",
+        "3": "Wednesday", "Wed": "Wednesday", "Wednesday": "Wednesday",
+        "4": "Thursday", "Thu": "Thursday", "Thursday": "Thursday",
+        "5": "Friday", "Fri": "Friday", "Friday": "Friday",
+        "6": "Saturday", "Sat": "Saturday", "Saturday": "Saturday",
+        "7": "Sunday", "Sun": "Sunday", "Sunday": "Sunday"
+    }
 
-    # Loop until a valid day is provided
-    while day not in days_of_week:
-        try:
-            day = input(
-                "1 - MON - Monday\n"
-                "2 - TUE - Tuesday\n"
-                "3 - WED - Wednesday\n"
-                "4 - THU - Thursday\n"
-                "5 - FRI - Friday\n"
-                "6 - SAT - Saturday\n"
-                "7 - SUN - Sunday\n"
-                "Choose by which day of the week you wish to filter the dataset: ").strip()
-        except KeyboardInterrupt:
-            print('\n*** Terminating Script ***')
-            sys.exit()
-        else:
-            day = day.capitalize()  # Standardize input to title case
-            # Map numeric or abbreviated inputs to full day names
-            if day in ["1", "Mon"]: 
-                day = "Monday"
-            elif day in ["2", "Tue"]: 
-                day = "Tuesday"
-            elif day in ["3", "Wed"]: 
-                day = "Wednesday"
-            elif day in ["4", "Thu"]: 
-                day = "Thursday"
-            elif day in ["5", "Fri"]: 
-                day = "Friday"
-            elif day in ["6", "Sat"]: 
-                day = "Saturday"
-            elif day in ["7", "Sun"]: 
-                day = "Sunday"
-            if day not in days_of_week:
-                print("\n*** Invalid input ***")
+    while True:
+        user_input = input(
+            "1 - MON - Monday\n"
+            "2 - TUE - Tuesday\n"
+            "3 - WED - Wednesday\n"
+            "4 - THU - Thursday\n"
+            "5 - FRI - Friday\n"
+            "6 - SAT - Saturday\n"
+            "7 - SUN - Sunday\n"
+            "Choose by which day of the week you wish to filter the dataset: "
+        ).strip().capitalize()
+        day = day_map.get(user_input, None)
+        if day:
+            break
+        print("\n*** Invalid input ***")
 
-    print(f'--- Selected Filter: {day}')        
+    print(f'--- Selected Filter: {day}')
+    # Use vectorized comparison for speed
     filtered_df = df[df['Start Day'] == day]
     return filtered_df
 
-def main():
+def main(PATH):
     """Main function to run the bikeshare statistics terminal interface."""
     # Define valid menu options
     answers = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12')
@@ -357,4 +373,4 @@ def main():
 
 # Entry point for the script
 if __name__ == "__main__":
-    main()
+    main(PATH)
