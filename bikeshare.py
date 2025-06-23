@@ -135,29 +135,27 @@ def user_stats(df):
 def city_filter(PATH):
     """Prompts the user to select a city dataset and loads the corresponding CSV file."""
     # Define valid city codes and their full names
-    CITIES = ['CH', 'NY', 'WS']
-    CITY_NAMES = {'CH': 'Chicago', 'NY': 'New York', 'WS': 'Washington'}
-    user_input = True
+    city_names = {'CH': 'Chicago', 'NY': 'New York', 'WS': 'Washington'}
 
     # Loop until a valid city code is provided
-    while user_input:
+    while True:
         user_city = input('CH - Chicago\n'
                           'NY - New York\n'
                           'WS - Washington DC\n'
-                          'Which dataset do you want to use [CH, NY, WS]: ').upper()
+                          'Which dataset do you want to use [CH, NY, WS]: ').strip().upper()
         
-        if user_city in CITIES:
-            user_input = False
-        else:
-            print("*** Invalid Input - only [CH, NY, WS] ***")
+        if user_city in city_names:
+            break  # Exit the loop if a valid city code is provided
+        
+        print("*** Invalid Input - only [CH, NY, WS] ***")
     
     # Attempt to load the CSV file for the selected city
     try: 
-        df = pd.read_csv(PATH + CITY_DATA[user_city])
-    except: 
-        print('*** CSV Import Failed ***')
+        df = pd.read_csv(f"{PATH}{CITY_DATA[user_city]}")
+    except Exception as e: 
+        print(f'*** CSV Import Failed - {e} ***')
     else:
-        print(f'--- Imported {CITY_NAMES[user_city]} City Data ---')
+        print(f'--- Imported {city_names[user_city]} City Data ---')
         return df
 
 def filter_by_month(df):
@@ -217,7 +215,7 @@ def filter_by_day_of_week(df):
     filtered_df = df[df['Start Day'] == day]
     return filtered_df
 
-def main():
+def main(PATH):
     """Main function to run the bikeshare statistics terminal interface."""
     # Define valid menu options
     answers = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12')
@@ -375,4 +373,4 @@ def main():
 
 # Entry point for the script
 if __name__ == "__main__":
-    main()
+    main(PATH)
